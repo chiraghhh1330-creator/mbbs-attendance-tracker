@@ -167,7 +167,7 @@ footer{padding-bottom:30px}
 // Add your Supabase project URL and anon/public key here (Project Settings → API).
 // Never put a service_role key in a browser app.
 const SUPABASE_URL = "https://skorywsfdtodurslidcm.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_PUBLIC_KEY";
+const SUPABASE_ANON_KEY = "sb_publishable_2EhekSnrKk9uvosA6_jfrg_VN9VRvcK";
 const cloudConfigured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const supabaseClient = cloudConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 let authMode="login", currentUser=null;
