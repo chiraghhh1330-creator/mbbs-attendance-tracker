@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>MBBS Attendance Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f5f6fc;--card:#fff;--ink:#1b2040;--muted:#777d97;--line:#e8e9f3;--accent:#6c5ce7;--good:#138a68;--warn:#b7791f;--bad:#d94f68;--lav:#f0edff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 8% 0%,#ebe8ff 0,transparent 32%),var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);letter-spacing:-.01em}
+header{background:linear-gradient(115deg,#171a32,#29254c 72%,#4d438c);color:white;padding:19px 16px;position:sticky;top:0;z-index:5;box-shadow:0 8px 25px #29254c20}.header-inner{max-width:980px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}header h1{font-size:20px;letter-spacing:-.04em;margin:0 0 4px}header p{margin:0;color:#d5d4ec;font-size:12px;line-height:1.5}.logout-btn{border:1px solid #ffffff42;background:#ffffff12;color:white;border-radius:12px;padding:9px 12px;font-weight:750;white-space:nowrap}
+nav{display:flex;gap:7px;overflow:auto;padding:11px max(12px,calc((100vw - 980px)/2));background:#ffffffed;border-bottom:1px solid var(--line);position:sticky;top:76px;z-index:4;backdrop-filter:blur(14px)}nav button{border:0;background:#f0eff9;color:#625d7d;border-radius:999px;padding:10px 14px;white-space:nowrap;font-weight:800;cursor:pointer}nav button.active{background:var(--accent);color:white;box-shadow:0 4px 12px #6658d344}
+main{max-width:980px;margin:auto;padding:18px 14px;min-height:70vh}.view{display:none}.view.active{display:block}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.card,.stat{background:var(--card);border:1px solid #e8e8f2;border-radius:19px;box-shadow:0 7px 22px #29254c08;padding:16px}.subject{border-left:4px solid var(--c);transition:transform .18s}.subject:active{transform:scale(.99)}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.name{font-weight:850;letter-spacing:-.02em}.pct{font-size:26px;font-weight:900;letter-spacing:-.06em}.muted{color:var(--muted);font-size:12px;line-height:1.5}.progress{height:7px;background:#f0f0f7;border-radius:99px;overflow:hidden;margin:11px 0}.bar{height:100%;border-radius:99px}.actions{display:flex;gap:7px;margin-top:12px}.actions button,.btn{flex:1;border:0;border-radius:12px;padding:11px;font-weight:800;cursor:pointer}.present{background:#e1f7ef;color:#147456}.absent{background:#ffeaed;color:#b52e48}.outline{background:#f0effa;color:#5147a0}h2{font-size:21px;letter-spacing:-.04em;margin:10px 0 14px}h3{margin:0 0 8px;font-size:15px}.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}select,input{width:100%;padding:12px;border:1px solid #e0e2ee;border-radius:12px;background:#fff;font:inherit;color:var(--ink);outline:none}select:focus,input:focus{border-color:#8276e6;box-shadow:0 0 0 3px #8276e61c}.session{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:15px;padding:12px;background:#fff;margin-bottom:8px;box-shadow:0 4px 14px #29254c06}.time{font-size:12px;font-weight:900;min-width:68px;color:#625d7d}.tag{font-size:11px;background:#eeedff;color:#5548b3;border-radius:7px;padding:4px 7px;display:inline-block;margin-top:4px}.session button{border:0;border-radius:9px;padding:9px 10px;font-weight:800;cursor:pointer}.datehead{margin:18px 0 8px;font-weight:900}.stat b{font-size:25px;display:block;margin-top:4px;letter-spacing:-.05em;color:#272448}.empty{padding:25px;text-align:center;color:var(--muted);background:#ffffffb8;border:1px dashed #d8d5ef;border-radius:16px}.hero{background:linear-gradient(120deg,#6558d5,#8c7cf0);border-radius:20px;color:white;padding:18px;margin-bottom:14px;box-shadow:0 12px 25px #6658d32a}.hero .muted{color:#ece9ff}.hero h2{margin:5px 0}.pill{display:inline-block;border-radius:999px;background:#ffffff26;padding:5px 9px;font-size:11px;font-weight:800}.calendar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.calendar-head input{max-width:190px}.section-note{padding:12px 14px;background:#f0efff;border-radius:12px;color:#5c529e;font-size:12px;line-height:1.5;margin-bottom:12px}.auth-screen{min-height:100svh;display:flex;align-items:center;justify-content:center;padding:26px 18px;background:radial-gradient(ellipse at 80% 15%,#4f478a 0,transparent 37%),linear-gradient(145deg,#171a32,#242344 65%,#342d5c);position:relative;overflow:hidden;color:#20223a}.auth-screen:before,.auth-screen:after{content:"";position:absolute;border:1px solid #ffffff12;border-radius:50%;width:390px;height:390px;right:-180px;bottom:-180px}.auth-screen:after{width:270px;height:270px;right:-120px;bottom:-120px}.auth-card{position:relative;z-index:1;background:#fff;width:min(100%,410px);padding:30px 27px 24px;border-radius:27px;box-shadow:0 25px 80px #08091e55}.auth-mark{height:43px;width:43px;display:grid;place-items:center;border-radius:14px;background:#eeedff;color:#6658d3;font-size:25px;margin-bottom:20px}.eyebrow{font-size:10px;letter-spacing:.15em;font-weight:850;color:#7770b6;margin:0 0 8px}.auth-card h1{font-size:31px;letter-spacing:-.06em;margin:0;color:#1d2038}.auth-card h1 span{color:#7669df}.auth-sub{font-size:13px;line-height:1.6;color:#85899a;margin:8px 0 22px}.auth-tabs{display:grid;grid-template-columns:1fr 1fr;background:#f3f3f9;padding:4px;border-radius:12px;margin-bottom:20px}.auth-tab{border:0;border-radius:9px;padding:10px;background:transparent;color:#777b8d;font-weight:750}.auth-tab.active{background:white;color:#5548b3;box-shadow:0 2px 8px #28234a10}.auth-card label{display:block;font-size:12px;font-weight:800;color:#3b3e55;margin:14px 0 7px}.auth-card input{background:#fafaff;border-color:#e8e7f1}.auth-submit{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;border-radius:12px;padding:14px 16px;margin-top:20px;background:linear-gradient(110deg,#6558d5,#8173e6);color:white;font-weight:850;box-shadow:0 7px 17px #6658d333}.auth-submit span{font-size:20px}.auth-message{font-size:12px;min-height:16px;color:#c43e58;margin:10px 0 0}.auth-message.ok{color:#16876a}.auth-foot{text-align:center;color:#9a9cad;font-size:11px;margin:18px 0 0}.auth-decoration{position:absolute;bottom:22px;left:25px;right:25px;display:flex;align-items:center;gap:12px;color:#ffffff80;font-size:10px;letter-spacing:.16em;font-weight:800}.deco-line{height:1px;max-width:90px;background:#ffffff40;flex:1}[hidden]{display:none!important}footer{padding:30px 14px 50px;color:#7b8494;text-align:center;font-size:12px}@media(max-width:560px){.toolbar{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.pct{font-size:23px}.auth-card{padding:27px 22px 22px}.auth-decoration{bottom:12px}nav{top:76px}.header-inner{align-items:flex-start}.logout-btn{font-size:12px;padding:8px 10px}.session{gap:7px}.time{min-width:58px}.session button{padding:8px;font-size:11px}.calendar-head{align-items:flex-start;flex-direction:column}.calendar-head input{max-width:none}}
+</style>
+</head>
+<body>
+<section id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-mark">✦</div>
+    <p class="eyebrow">YOUR PERSONAL STUDY COMPANION</p>
+    <h1>Welcome back<span>.</span></h1>
+    <p class="auth-sub">Keep your attendance on track, one class at a time.</p>
+    <div class="auth-tabs"><button id="loginTab" class="auth-tab active" type="button">Log in</button><button id="signupTab" class="auth-tab" type="button">Create account</button></div>
+    <form id="authForm">
+      <label for="authUsername">Email address</label>
+      <input id="authUsername" type="email" autocomplete="email" required placeholder="you@example.com">
+      <label for="authPassword">Password</label>
+      <input id="authPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="Enter your password">
+      <button class="auth-submit" type="submit" id="authSubmit">Log in <span>→</span></button>
+      <p id="authMessage" class="auth-message" role="status"></p>
+    </form>
+    <p class="auth-foot">🔒 Secure sign-in · Your attendance syncs across devices</p>
+  </div>
+  <div class="auth-decoration"><span>01</span><div class="deco-line"></div><span>SHOW UP. LEVEL UP.</span></div>
+</section>
+
+<div id="appShell" hidden>
+<header><div class="header-inner"><div><h1>📚 MBBS Attendance Tracker</h1><p>2nd Year • Block 1 • 05 Oct–31 Dec 2026</p></div><button id="logoutBtn" class="logout-btn" type="button">Log out ↗</button></div></header>
+<div style="max-width:980px;margin:0 auto;padding:10px 14px 0;background:#fff">
+<label for="globalBatch" style="display:block;font-size:12px;font-weight:800;color:#625d7d;margin-bottom:6px">STUDENT BATCH</label>
+<select id="globalBatch" aria-label="Select your batch" style="max-width:240px"><option value="A">Batch A</option><option value="B">Batch B</option></select>
+<div class="muted" style="margin-top:5px">Block 1 timetable · 5 Oct–31 Dec 2026</div>
+</div>
+<nav>
+<button class="active" data-view="dashboard">Dashboard</button>
+<button data-view="today">Today</button>
+<button data-view="timetable">Timetable</button>
+ <button data-view="calendar">Calendar</button>
+<button data-view="history">History</button>
+<button data-view="settings">Settings</button>
+</nav>
+<main>
+<section id="dashboard" class="view active">
+<div class="hero"><span class="pill">YOUR ATTENDANCE OVERVIEW</span><h2>Small steps. Safe attendance.</h2><div class="muted">Track every class, protect your 75% target, and stay ahead of shortages.</div></div>
+<h2>Attendance by subject</h2>
+<div id="overall"></div>
+<div id="subjects" class="grid"></div>
+</section>
+
+<section id="today" class="view">
+<h2>Today's classes</h2>
+<div class="toolbar"><input id="todayDate" type="date"><select id="batch"><option value="A">Batch A</option><option value="B">Batch B</option></select></div>
+<div id="todayList"></div>
+</section>
+
+<section id="timetable" class="view">
+<h2>Block 1 weekly timetable</h2>
+<div class="toolbar"><select id="ttBatch"><option value="A">Batch A</option><option value="B">Batch B</option></select><select id="daySelect"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option></select></div>
+<div id="ttList"></div>
+</section>
+
+<section id="calendar" class="view">
+ <div class="calendar-head"><div><h2 style="margin-bottom:4px">Class calendar</h2><div class="muted">Choose a date to see scheduled sessions and mark attendance.</div></div><input id="calendarDate" type="date" aria-label="Calendar date"></div>
+ <div class="toolbar"><select id="calendarBatch"><option value="A">Batch A</option><option value="B">Batch B</option></select><div class="stat"><span class="muted">Attendance target</span><b>75%</b><span class="muted">Change it in Settings if needed.</span></div></div>
+ <div class="section-note">This is the weekly Block 1 template shown on page 3 of your PDF, for 05 Oct–31 Dec 2026. Check any date-specific changes or holidays elsewhere in the PDF against college notices. Saturday 11 AM–1 PM is shown as Batch A+B DOAP/SGD, but the subject is not legible in the template.</div>
+ <div id="calendarList"></div>
+</section>
+
+<section id="history" class="view">
+<h2>Attendance history</h2>
+<div id="historyList"></div>
+</section>
+
+<section id="settings" class="view">
+<h2>Settings</h2>
+<div class="card">
+<div class="smalltitle">Minimum required attendance</div>
+<input id="threshold" type="number" min="0" max="100" step="1">
+<p class="muted">The app uses this percentage to show how many future classes you can miss, or how many consecutive classes you need to attend to reach the target.</p>
+</div>
+<div class="card" style="margin-top:12px">
+<div class="smalltitle">Data</div>
+<div class="actions"><button class="outline" onclick="exportData()">Export backup</button><button class="outline" onclick="importData()">Import backup</button><button class="absent" onclick="resetAll()">Reset all</button></div>
+<input id="importFile" type="file" accept=".json" hidden>
+</div>
+</section>
+</main>
+<footer>Secure personal attendance · Cloud sync enabled · Export a backup occasionally for extra safety.</footer>
+
+</div>
+<script>
+
+// Add your Supabase project URL and anon/public key here (Project Settings → API).
+// Never put a service_role key in a browser app.
+const SUPABASE_URL = "https://skorywsfdtodurslidcm.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_2EhekSnrKk9uvosA6_jfrg_VN9VRvcK";
+const cloudConfigured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
+const supabaseClient = cloudConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+let authMode="login", currentUser=null;
+const authScreen=document.getElementById("authScreen"), appShell=document.getElementById("appShell");
+function showApp(email){authScreen.hidden=true;appShell.hidden=false;document.querySelector("header p").textContent="2nd Year • Block 1 • 05 Oct–31 Dec 2026 · "+email;}
+function showAuth(){appShell.hidden=true;authScreen.hidden=false;}
+function setAuthMode(mode){authMode=mode;document.getElementById("loginTab").classList.toggle("active",mode==="login");document.getElementById("signupTab").classList.toggle("active",mode==="signup");document.getElementById("authSubmit").innerHTML=(mode==="login"?"Log in":"Create account")+' <span>→</span>';document.getElementById("authPassword").autocomplete=mode==="login"?"current-password":"new-password";document.getElementById("authUsername").placeholder="you@example.com";document.getElementById("authMessage").textContent="";}
+document.getElementById("loginTab").onclick=()=>setAuthMode("login");document.getElementById("signupTab").onclick=()=>setAuthMode("signup");
+function authNotice(text,ok=false){const m=document.getElementById("authMessage");m.textContent=text;m.classList.toggle("ok",ok);}
+async function loadCloudData(){
+ if(!currentUser)return;
+ const {data:row,error}=await supabaseClient.from("attendance_data").select("payload").eq("user_id",currentUser.id).maybeSingle();
+ if(error)throw error;
+ if(row&&row.payload){data=row.payload;localStorage.setItem(localCacheKey(),JSON.stringify(data));}
+ else {const cached=localStorage.getItem(localCacheKey());if(cached){try{data=JSON.parse(cached);await save();}catch{}}}
+}
+function localCacheKey(){return "mbbsAttendanceCloudCache_"+(currentUser?.id||"guest");}
+async function signInAndLoad(){const {data:sessionData}=await supabaseClient.auth.getSession();currentUser=sessionData.session?.user||null;if(currentUser){data={threshold:75,records:[],batch:"A"};await loadCloudData();showApp(currentUser.email||"Student");initApp();}else showAuth();}
+document.getElementById("authForm").addEventListener("submit",async e=>{
+ e.preventDefault();const email=document.getElementById("authUsername").value.trim().toLowerCase(),password=document.getElementById("authPassword").value,submit=document.getElementById("authSubmit");submit.disabled=true;authNotice("");
+ try{
+  if(!supabaseClient){authNotice("One-time setup needed: add your Supabase project URL and anon key in index.html. See README.md.");return;}
+  if(authMode==="signup"){
+   const {data,error}=await supabaseClient.auth.signUp({email,password});if(error)throw error;
+   if(!data.session){authNotice("Account created! Check your email to confirm, then log in.",true);return;}
+   currentUser=data.user;
+  }else{const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});if(error)throw error;currentUser=data.user;}
+  data={threshold:75,records:[],batch:"A"};await loadCloudData();document.getElementById("authPassword").value="";showApp(currentUser.email||"Student");initApp();
+ }catch(err){authNotice(err.message||"Could not sign in. Check your details and try again.");}finally{submit.disabled=false;}
+});
+document.getElementById("logoutBtn").onclick=async()=>{if(supabaseClient)await supabaseClient.auth.signOut();currentUser=null;showAuth();setAuthMode("login");};
+
+const subjects = [
+ ["General Medicine","med","#4f83cc"],["General Surgery","surg","#f2b705"],["Obstetrics & Gynecology","obg","#b9bd00"],
+ ["Pharmacology","pharm","#00e878"],["Microbiology","micro","#75aee8"],["Pathology","path","#f08abb"],
+ ["Forensic Medicine","fmt","#b64be8"],["Community Medicine","cm","#ff7417"],["Clinical Posting","clinical","#d9d9d9"],
+ ["Sports / ECA","sports","#c42dc7"]
+];
+
+const schedule = {
+ Monday:[
+  ["08:00","09:00","General Medicine","IL"],
+  ["09:00","10:00","Pharmacology","IL"],
+  ["10:00","13:00","Clinical Posting","Clinical"],
+  ["14:00","15:00","Microbiology","IL"],
+  ["15:00","17:00","Pharmacology","DOAP/SGD","A"],
+  ["15:00","17:00","Microbiology","DOAP/SGD","B"]
+ ],
+ Tuesday:[
+  ["08:00","09:00","General Surgery","IL"],
+  ["09:00","10:00","Pharmacology","IL"],
+  ["10:00","13:00","Clinical Posting","Clinical"],
+  ["14:00","15:00","Forensic Medicine","IL/SGD"],
+  ["14:00","15:00","Community Medicine","IL/SGD"],
+  ["15:00","17:00","Pharmacology","DOAP/SGD","B"],
+  ["15:00","17:00","Microbiology","DOAP/SGD","A"]
+ ],
+ Wednesday:[
+  ["08:00","09:00","Obstetrics & Gynecology","IL"],
+  ["09:00","10:00","Microbiology","IL"],
+  ["10:00","13:00","Clinical Posting","Clinical"],
+  ["14:00","15:00","Pathology","IL/SGD"],
+  ["15:00","17:00","Pathology","DOAP/SGD","A"],
+  ["15:00","16:00","Forensic Medicine","DOAP/SGD","B"],
+  ["16:00","17:00","Community Medicine","IL/SGD","B"]
+ ],
+ Thursday:[
+  ["09:00","10:00","Pathology","IL"],
+  ["10:00","13:00","Clinical Posting","Clinical"],
+  ["14:00","15:00","Pharmacology","IL/SGD"],
+  ["15:00","17:00","Pathology","DOAP/SGD","B"],
+  ["15:00","16:00","Forensic Medicine","DOAP/SGD","A"],
+  ["16:00","17:00","Community Medicine","IL/SGD","A"]
+ ],
+ Friday:[
+  ["09:00","10:00","Microbiology","IL"],
+  ["10:00","13:00","Clinical Posting","Clinical"],
+  ["14:00","15:00","Pathology","IL/SGD"],
+  ["15:00","17:00","Pharmacology","DOAP/SGD","ALL"]
+ ],
+ Saturday:[
+  ["09:00","11:00","Pathology","DOAP/SGD","ALL"],
+  ["11:00","13:00","Batch A+B Practical / DOAP-SGD","DOAP/SGD","ALL"],
+  ["14:00","15:00","Sports / ECA","Sports/ECA","ALL"],
+  ["14:00","15:00","Integrated Teaching / Assessment & Feedback","Activity","ALL"]
+ ]};
+
+let data={threshold:75,records:[],batch:"A"};
+let saveQueue=Promise.resolve();
+function save(){
+ const snapshot=JSON.stringify(data);localStorage.setItem(localCacheKey(),snapshot);
+ if(!supabaseClient||!currentUser)return;
+ saveQueue=saveQueue.then(async()=>{const payload=JSON.parse(snapshot);const {error}=await supabaseClient.from("attendance_data").upsert({user_id:currentUser.id,payload,updated_at:new Date().toISOString()},{onConflict:"user_id"});if(error)console.error("Cloud save failed:",error);});
+ return saveQueue;
+}
+function selectedBatch(){return document.getElementById("globalBatch")?.value || data.batch || "A"}
+function batchRecords(){return data.records.filter(x=>(x.batch||"A")===selectedBatch())}
+function pct(name){let r=batchRecords().filter(x=>x.subject===name), p=r.filter(x=>x.status==="P").length; return r.length?Math.round(p/r.length*100):null}
+function counts(name){let r=batchRecords().filter(x=>x.subject===name);return {p:r.filter(x=>x.status==="P").length,a:r.filter(x=>x.status==="A").length,total:r.length}}
+function subjectColor(name){return (subjects.find(s=>s[0]===name)||["","", "#64748b"])[2]}
+function requiredText(name){
+ let c=counts(name), t=Number(data.threshold);
+ if(!c.total) return "No classes marked yet";
+ let p=c.p, n=c.total;
+ if(p/n>=t/100){
+   let miss=0; while((p)/(n+miss+1)>=t/100 && miss<10000) miss++;
+   return miss+" class"+(miss===1?"":"es")+" can be missed";
+ }
+ let need=0; while((p+need)/(n+need)<t/100 && need<10000) need++;
+ return "Attend next "+need+" to reach "+t+"%";
+}
+function renderDashboard(){
+ const all=batchRecords(), p=all.filter(x=>x.status==="P").length;
+ document.getElementById("overall").innerHTML=`<div class="grid" style="margin-bottom:12px">
+ <div class="stat"><span class="muted">Overall</span><b>${all.length?Math.round(p/all.length*100):"—"}%</b><span class="muted">${p} present / ${all.length} marked</span></div>
+ <div class="stat"><span class="muted">Target</span><b>${data.threshold}%</b><span class="muted">Minimum attendance</span></div></div>`;
+ document.getElementById("subjects").innerHTML=subjects.map(s=>{
+  let c=counts(s[0]), pc=pct(s[0]); let val=pc===null?0:pc;
+  return `<div class="card subject" style="--c:${s[2]}"><div class="row"><span class="name">${s[0]}</span><span class="pct">${pc===null?"—":pc+"%"}</span></div>
+  <div class="progress"><div class="bar" style="width:${val}%;background:${pc===null?"#cbd5e1":pc>=data.threshold?"#16a34a":"#dc2626"}"></div></div>
+  <div class="muted">${c.p} present • ${c.a} absent • ${c.total} marked</div><div class="muted" style="margin-top:5px">${requiredText(s[0])}</div>
+  <div class="actions"><button class="present" onclick="quick('${s[0]}','P')">+ Present</button><button class="absent" onclick="quick('${s[0]}','A')">+ Absent</button></div></div>`
+ }).join("");
+}
+function quick(subject,status){
+ let d=new Date().toISOString().slice(0,10); let id=crypto.randomUUID();
+ data.records.push({id,date:d,time:new Date().toTimeString().slice(0,5),subject,status,type:"Manual",batch:selectedBatch()}); save(); renderAll();
+}
+function isoToDay(d){return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(d+"T12:00:00").getDay()]}
+function filteredSchedule(day,batch){
+ return (schedule[day]||[]).filter(x=>!x[4]||x[4]==="ALL"||x[4]===batch)
+}
+function renderToday(){
+ let d=document.getElementById("todayDate").value, batch=document.getElementById("batch").value; let day=isoToDay(d);
+ let list=filteredSchedule(day,batch);
+ document.getElementById("todayList").innerHTML=list.length?list.map(x=>sessionHTML(x,d,batch)).join(""):`<div class="empty">No scheduled class for ${day}.</div>`;
+}
+function sessionHTML(x,date,batch){
+ let existing=data.records.filter(r=>r.date===date&&r.subject===x[2]&&r.time===x[0]&&(r.batch||"A")===batch);
+ let status=existing.length?existing[existing.length-1].status:null;
+ return `<div class="session"><div class="time">${x[0]}–${x[1]}</div><div style="flex:1"><b>${x[2]}</b><div class="tag">${x[3]}${x[4]&&x[4]!=="ALL"?" • Batch "+x[4]:""}</div></div>
+ ${status?`<button class="${status==="P"?"present":"absent"}" onclick="removeLatest('${date}','${x[0]}','${x[2]}')">${status==="P"?"Present":"Absent"} ✓</button>`:`<button class="present" onclick="markScheduled('${date}','${x[0]}','${x[2]}','P','${x[3]}')">Present</button><button class="absent" onclick="markScheduled('${date}','${x[0]}','${x[2]}','A','${x[3]}')">Absent</button>`}</div>`;
+}
+function markScheduled(date,time,subject,status,type){data.records.push({id:crypto.randomUUID(),date,time,subject,status,type,batch:selectedBatch()});save();renderAll();}
+function removeLatest(date,time,subject){let i=-1;for(let j=data.records.length-1;j>=0;j--)if(data.records[j].date===date&&data.records[j].time===time&&data.records[j].subject===subject&&(data.records[j].batch||"A")===selectedBatch()){i=j;break}if(i>=0)data.records.splice(i,1);save();renderAll();}
+function renderTT(){
+ let day=document.getElementById("daySelect").value,b=document.getElementById("ttBatch").value;
+ let list=filteredSchedule(day,b); document.getElementById("ttList").innerHTML=list.map(x=>`<div class="session"><div class="time">${x[0]}–${x[1]}</div><div><b>${x[2]}</b><div class="tag">${x[3]}${x[4]&&x[4]!=="ALL"?" • Batch "+x[4]:""}</div></div></div>`).join("");
+}
+function renderCalendar(){
+ const input=document.getElementById("calendarDate"); if(!input.value) input.value=new Date().toISOString().slice(0,10);
+ const d=input.value,b=document.getElementById("calendarBatch").value,day=isoToDay(d);
+ const list=filteredSchedule(day,b);
+ document.getElementById("calendarList").innerHTML=`<div class="datehead">${new Date(d+"T12:00:00").toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"})} · Batch ${b}</div>`+(list.length?list.map(x=>sessionHTML(x,d,b)).join(""):`<div class="empty">No scheduled classes in the current weekly template for ${day}.</div>`);
+}
+function renderHistory(){
+ let r=[...batchRecords()].sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+ document.getElementById("historyList").innerHTML=r.length?r.map(x=>`<div class="session"><div class="time">${x.date}<br>${x.time}</div><div style="flex:1"><b>${x.subject}</b><div class="muted">${x.type||"Manual"} · Batch ${x.batch||"A"}</div></div><button class="${x.status==="P"?"present":"absent"}" onclick="deleteRecord('${x.id}')">${x.status==="P"?"Present":"Absent"} ×</button></div>`).join(""):`<div class="empty">No attendance marked yet.</div>`;
+}
+function deleteRecord(id){data.records=data.records.filter(x=>x.id!==id);save();renderAll();}
+function renderAll(){renderDashboard();renderToday();renderTT();renderCalendar();renderHistory();}
+function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="mbbs-attendance-backup.json";a.click();}
+function importData(){document.getElementById("importFile").click();}
+document.getElementById("importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(x.records&&typeof x.threshold==="number"){data=x;save();renderAll();alert("Backup imported.");}else throw 0}catch{alert("Invalid backup file.");}};r.readAsText(f)}
+function resetAll(){if(confirm("Delete ALL attendance data?")){data={threshold:75,records:[],batch:"A"};save();renderAll();}}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.view).classList.add("active");});
+function initApp(){
+ document.getElementById("globalBatch").value=data.batch||"A";
+ document.getElementById("globalBatch").onchange=()=>{
+   data.batch=document.getElementById("globalBatch").value;
+   document.getElementById("batch").value=data.batch;
+   document.getElementById("ttBatch").value=data.batch;
+   document.getElementById("calendarBatch").value=data.batch;
+   save();renderAll();
+ };
+ document.getElementById("todayDate").value=new Date().toISOString().slice(0,10);
+ document.getElementById("batch").value=data.batch||"A";document.getElementById("ttBatch").value=data.batch||"A";document.getElementById("globalBatch").value=data.batch||"A";
+ document.getElementById("todayDate").onchange=renderToday;
+ document.getElementById("batch").onchange=()=>{data.batch=document.getElementById("batch").value;save();document.getElementById("globalBatch").value=data.batch;document.getElementById("ttBatch").value=data.batch;document.getElementById("calendarBatch").value=data.batch;renderToday();renderTT();renderCalendar()};
+ document.getElementById("ttBatch").onchange=()=>{data.batch=document.getElementById("ttBatch").value;save();document.getElementById("globalBatch").value=data.batch;document.getElementById("batch").value=data.batch;document.getElementById("calendarBatch").value=data.batch;renderTT();renderToday();renderCalendar()};
+ document.getElementById("daySelect").onchange=renderTT;
+  document.getElementById("calendarDate").value=new Date().toISOString().slice(0,10);
+  document.getElementById("calendarDate").onchange=renderCalendar;
+  document.getElementById("calendarBatch").value=data.batch||"A";
+  document.getElementById("calendarBatch").onchange=()=>{data.batch=document.getElementById("calendarBatch").value;save();document.getElementById("globalBatch").value=data.batch;document.getElementById("batch").value=data.batch;document.getElementById("ttBatch").value=data.batch;renderToday();renderTT();renderCalendar()};
+  document.getElementById("threshold").value=data.threshold;
+ document.getElementById("threshold").onchange=e=>{data.threshold=Math.max(0,Math.min(100,Number(e.target.value)||75));save();renderAll()};renderAll();
+}
+(async()=>{if(!supabaseClient){showAuth();authNotice("Cloud login setup needed. Follow the setup steps in README.md.");return;}try{await signInAndLoad();}catch(err){console.error(err);showAuth();authNotice("Could not connect to cloud data. Check Supabase setup and SQL.");}})();
+</script>
+</body></html>
